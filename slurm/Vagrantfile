@@ -1,11 +1,11 @@
 #Define the list of machines
 slurm_cluster = {
-    :controller => {
-        :hostname => "controller",
+    :master => {
+        :hostname => "master",
         :ipaddress => "10.10.10.3"
     },
-    :server => {                                                              
-        :hostname => "server",
+    :worker001 => {                                                              
+        :hostname => "worker-001",
         :ipaddress => "10.10.10.4"
     }
 }
@@ -17,30 +17,39 @@ ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
 $script = <<SCRIPT
 echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys
 echo #{ssh_pub_key} >> /root/.ssh/authorized_keys
-apt-get update
-apt-get install -y -q emacs
-apt-get install -y -q vim
+# apt-get update
+# apt-get install -y -q emacs
+# apt-get install -y -q vim
 apt-get install -y -q slurm-llnl
-echo "10.10.10.3    controller" >> /etc/hosts
-echo "10.10.10.4    server " >> /etc/hosts
-wget https://raw.githubusercontent.com/cloudmesh/ipython/master/slurm/slurm.conf
-mv slurm.conf /etc/slurm-llnl/
+echo "10.10.10.3    master" >> /etc/hosts
+echo "10.10.10.4    worker-001 " >> /etc/hosts
+# wget https://raw.githubusercontent.com/cloudmesh/ipython/master/slurm/slurm.conf
+# mv slurm.conf /etc/slurm-llnl/
+cp /home/vagrant/shared/slurm.conf /etc/slurm-llnl/
 SCRIPT
 
 Vagrant.configure("2") do |global_config|
     slurm_cluster.each_pair do |name, options|
         global_config.vm.define name do |config|
 
+          puts "# --------------------"
+          puts name, slurm_cluster[name][:hostname]
+          puts "# --------------------"
+          
             #VM configurations
 
             config.vm.box = "ubuntu-15.04"
-            config.vm.hostname = "#{name}"
+            config.vm.hostname = slurm_cluster[name][:hostname]
+            puts config.vm.hostname 
             config.vm.network :private_network, ip: options[:ipaddress]
 
+            config.vm.synced_folder ".", "/home/vagrant/shared"
+            
             #VM specifications
 
             config.vm.provider :virtualbox do |v|
-                v.customize ["modifyvm", :id, "--memory", "512"]
+              # v.gui = true
+              v.customize ["modifyvm", :id, "--memory", "512"]
             end
 
             #VM provisioning

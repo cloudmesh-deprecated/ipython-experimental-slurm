@@ -19,12 +19,14 @@ def rm(filename):
     os.system("rm -f {:}".format(filename))
 
 def sudo_ssh(host, command, background=False):
+    print ("-----------------")
     print ("EXECUTING", host, command)
     if background:
         os.system("ssh {:} {:} sudo {:} &".format(NOSTRICT, host, command))
     else:
         os.system("ssh {:} {:} 'sudo {:}'".format(NOSTRICT, host, command)) 
-
+    print ("-----------------")
+        
 rm("~/.ssh/known_hosts")
  
 for host in [MASTER, WORKER]:
