@@ -24,7 +24,7 @@ def sudo_ssh(host, command, background=False):
         os.system("ssh {:} {:} sudo {:} &".format(NOSTRICT, host, command))
     else:
         os.system("ssh {:} {:} 'sudo {:}'".format(NOSTRICT, host, command)) 
-    
+
 rm("~/.ssh/known_hosts")
  
 for host in [MASTER, WORKER]:
@@ -55,6 +55,7 @@ print "------------------"
 print "start services"
 print "------------------"    
 
-#os.system("ssh " + MASTER + ' sudo slurmctld -D &')
-#os.system("ssh " + MASTER + ' sudo slurmd &')
+
+os.system("ssh " + MASTER + " sudo slurmctld -D &")
+os.system("ssh " + WORKER + " sudo slurmd &")
 

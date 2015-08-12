@@ -1,6 +1,6 @@
 #Define the list of machines
 slurm_cluster = {
-    :controller => {
+    :master => {
         :hostname => "master",
         :ipaddress => "10.10.10.3"
     },
@@ -21,7 +21,7 @@ apt-get install -y -q emacs
 apt-get install -y -q vim
 apt-get install -y -q slurm-llnl
 echo "10.10.10.3    master" >> /etc/hosts
-echo "10.10.10.4    worker" >> /etc/hosts
+echo "10.10.10.4    worker " >> /etc/hosts
 wget https://raw.githubusercontent.com/cloudmesh/ipython/master/slurm/slurm.conf
 mv slurm.conf /etc/slurm-llnl/
 SCRIPT
