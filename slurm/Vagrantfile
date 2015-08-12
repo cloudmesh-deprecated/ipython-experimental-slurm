@@ -1,11 +1,11 @@
 #Define the list of machines
 slurm_cluster = {
     :controller => {
-        :hostname => "controller",
+        :hostname => "master",
         :ipaddress => "10.10.10.3"
     },
-    :server => {                                                              
-        :hostname => "server",
+    :worker => {                                                              
+        :hostname => "worker",
         :ipaddress => "10.10.10.4"
     }
 }
@@ -20,8 +20,8 @@ apt-get update
 apt-get install -y -q emacs
 apt-get install -y -q vim
 apt-get install -y -q slurm-llnl
-echo "10.10.10.3    controller" >> /etc/hosts
-echo "10.10.10.4    server" >> /etc/hosts
+echo "10.10.10.3    master" >> /etc/hosts
+echo "10.10.10.4    worker" >> /etc/hosts
 wget https://raw.githubusercontent.com/cloudmesh/ipython/master/slurm/slurm.conf
 mv slurm.conf /etc/slurm-llnl/
 SCRIPT
@@ -29,12 +29,15 @@ SCRIPT
 Vagrant.configure("2") do |global_config|
     slurm_cluster.each_pair do |name, options|
         global_config.vm.define name do |config|
-          #VM configurations
+
+            #VM configurations
+
             config.vm.box = "ubuntu-15.04"
             config.vm.hostname = "#{name}"
             config.vm.network :private_network, ip: options[:ipaddress]
 
             #VM specifications
+
             config.vm.provider :virtualbox do |v|
                 v.customize ["modifyvm", :id, "--memory", "512"]
             end
@@ -46,9 +49,3 @@ Vagrant.configure("2") do |global_config|
     end
 end
 
-#    slurm_cluster.each_pair do |name, options|
-#        global_config.vm.define name do |config|
-#          config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/me.pub"
-#       end
-#    end
-#end

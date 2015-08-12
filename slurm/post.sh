@@ -1,8 +1,9 @@
-# !/bin/sh -x
-set -x
-
+#! /usr/bin/env python
+    
 rm -f ~/.ssh/known_hosts
 
+
+ 
 
 export NOSTRICT="-o StrictHostKeyChecking=no"
 export MASTER="vagrant@10.10.10.3"
@@ -41,5 +42,5 @@ scp $NOSTRICT test.sh $MASTER:/home/vagrant/
 
 
 $SSH $MASTER sudo slurmctld -D &
-$SSH $MASTER sudo slurmd &
+$SSH $CONTROLER sudo slurmd &
 
