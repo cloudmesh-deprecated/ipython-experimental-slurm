@@ -1,16 +1,17 @@
 #Define the list of machines
 slurm_cluster = {
-    :master => {
-        :hostname => "master",
+    :controller => {
+        :hostname => "controller",
         :ipaddress => "10.10.10.3"
     },
-    :worker => {                                                              
-        :hostname => "worker",
+    :server => {                                                              
+        :hostname => "server",
         :ipaddress => "10.10.10.4"
     }
 }
 
 ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
+
 
 #Provisioning inline script
 $script = <<SCRIPT
@@ -20,8 +21,8 @@ apt-get update
 apt-get install -y -q emacs
 apt-get install -y -q vim
 apt-get install -y -q slurm-llnl
-echo "10.10.10.3    master" >> /etc/hosts
-echo "10.10.10.4    worker " >> /etc/hosts
+echo "10.10.10.3    controller" >> /etc/hosts
+echo "10.10.10.4    server " >> /etc/hosts
 wget https://raw.githubusercontent.com/cloudmesh/ipython/master/slurm/slurm.conf
 mv slurm.conf /etc/slurm-llnl/
 SCRIPT
