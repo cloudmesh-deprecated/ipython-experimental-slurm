@@ -1,0 +1,13 @@
+master:
+  - name: master
+    hostname: master
+    ipaddress: 10.10.10.3
+worker:
+  - name: worker01
+    hostname: worker-01
+    ipaddress: 10.10.10.4
+  - name: worker02
+    hostname: worker-02
+    ipaddress: 10.10.10.5
+
+
