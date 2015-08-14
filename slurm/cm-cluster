@@ -1,0 +1,173 @@
+#!/usr/bin/env python
+
+"""Usage: cm-cluster inventory [FILE]
+          cm-cluster up
+          cm-cluster status
+          cm-cluster ping
+          cm-cluster deploy
+          cm-cluster shell COMMAND [HOST]
+          cm-cluster sbatch FILE
+          cm-cluster destroy                    
+
+Process FILE and optionally apply correction to either left-hand side or
+right-hand side.
+
+Arguments:
+  FILE        optional input file 
+  CORRECTION  correction angle, needs FILE, --left or --right to be present
+
+Options:
+  -h --help
+  -v       verbose mode
+
+Description:
+
+    This command takes an inventory.yml file and generates from it a ruby and an ansible inventory::
+
+        master:
+          - name: master
+            hostname: "master"
+            ipaddress: "10.10.10.3"
+        worker:
+          - name: worker001
+            hostname: "worker001"
+            ipaddress: "10.10.10.4"
+          - name: worker002
+            hostname: "worker002"
+            ipaddress: "10.10.10.5"
+
+    Next you need to create the inventory files with the command::
+
+       cm-cluster inventory
+
+    This will create the files inventory.txt and inventory.rb
+
+    Now you want to start some virtual machines on which we deploy the cluster with 
+
+        cm-cluster up
+
+    Now we switch to ansible to manage the cluster 
+
+    
+"""
+from docopt import docopt
+import yaml
+import os
+
+def generate_etc_inventory(inventory):
+
+    def etc_host(host):
+        return '{hostname} {ipaddress}\n'.format(**host)
+
+    content = ""
+    for host in inventory['master']:
+        content = content + etc_host(host)
+    for host in inventory['worker']:
+        content = content + etc_host(host)
+    return content
+
+def generate_vagrant_inventory(inventory):
+    '''
+    creates a inventory a s global variable
+    
+    $slurm_cluster = {
+        :master => {
+            :hostname => "master",
+            :ipaddress => "10.10.10.3"
+        },
+        :worker001 => {                                                              
+            :hostname => "worker-001",
+            :ipaddress => "10.10.10.4"
+        }
+    }
+    '''
+
+    def print_host(host):
+        host["BEGIN"] = "{"
+        host["END"] = "}"        
+        content = ""
+        content = content + '    :{name} => {BEGIN}\n'.format(**host)
+        content = content + '      :hostname => "{hostname}",\n'.format(**host)
+        content = content + '      :ipaddress => "{ipaddress}"\n'.format(**host)
+        content = content + "    },\n"
+        return content
+        
+    content = "$slurm_cluster = {\n"
+    for host in inventory['master']:
+        content = content + print_host(host)
+    for host in inventory['worker']:
+        content = content + print_host(host)
+    content = content[:-2] + "\n}"
+    return content
+
+def generate_ansible_inventory(inventory):
+    content = ""
+    for group in inventory:
+        content = content + "[{:}]\n".format(group)
+        for host in inventory[group]:
+            content = content + "{hostname} ansible_ssh_host={ipaddress} ansible_ssh_user=vagrant\n".format(**host)
+        content = content + "\n"
+    return content
+
+if __name__ == '__main__':
+    arguments = docopt(__doc__)
+    # print(arguments)
+
+    if arguments['inventory']:
+
+        filename = arguments['FILE']
+
+        if filename is None:
+            filename = "inventory.yml"
+            
+        stream = open(filename, "r")
+        inventory = yaml.load(stream)
+
+        ansible_inventory = generate_ansible_inventory(inventory)
+
+        with open("inventory.txt", "w") as text_file:
+            text_file.write(ansible_inventory)
+            
+        vagrant_inventory = generate_vagrant_inventory(inventory)
+
+        with open("inventory.rb", "w") as text_file:
+            text_file.write(vagrant_inventory)
+
+        etc_inventory = generate_etc_inventory(inventory)            
+        with open("hosts", "w") as text_file:
+            text_file.write(etc_inventory)
+            
+    elif arguments['up']:
+
+        os.system("vagrant up")
+
+    elif arguments['status']:
+
+        os.system("vagrant status")
+
+    elif arguments['destroy']:
+
+        os.system("vagrant destroy -f")
+
+    elif arguments['ping']:
+
+        os.system("ansible -m ping all")
+
+    elif arguments['deploy']:
+
+        os.system("ansible-playbook playbook.yml")
+
+    elif arguments['shell']:
+
+        command = arguments['COMMAND']
+        host = arguments['HOST']
+        if host is None:
+            host = "all"
+        
+        os.system('ansible {:} -m shell -a "{:}"'.format(host, command))
+
+    elif arguments['sbatch']:
+
+        batch = arguments['FILE']
+        os.system('ansible master -m shell -a "sbatch shared/{:}"'.format(batch))
+

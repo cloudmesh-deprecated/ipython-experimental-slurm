@@ -1,12 +1,12 @@
 ---
 
-- hosts: master
+- hosts: all
   sudo: true
 
   tasks:
-  - name: "Build hosts file"
-    lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item].ansible_default_ipv4.address }} {{item}}" state=present
-    when: hostvars[item].ansible_default_ipv4.address is defined
+  - name: "build hosts file"
+    lineinfile: dest=/etc/hosts regexp='.*{{ item }}$' line="{{ hostvars[item]['ansible_ssh_host'] }} {{item}}" state=present
+    when: hostvars[item]['ansible_ssh_host'] is defined
     with_items: groups['all']
 
 - hosts: all
@@ -84,17 +84,14 @@
 - hosts: master
   sudo: yes
   tasks:
-    - name: start slurm daemon
-      command: /usr/sbin/slurmctld -D
+    - name: start master slurm daemon
+      shell: /usr/sbin/slurmctld -D &
 
 
 - hosts: worker
   sudo: yes
   tasks:
-    - name: start slurm daemon
-      command: /usr/sbin/slurmd
-      
-#      command: /etc/init.d/slurmd restart
-    # - name: start slurm daemon
-    #   slurmd &
+    - name: start worker slurm daemon
+      shell: /usr/sbin/slurmd &
+
 

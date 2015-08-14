@@ -1,0 +1,55 @@
+ansible master -a /bin/hostname
+
+	10.10.10.3 | success | rc=0 >>
+	master
+
+ansible master -m shell -a "echo Hallo"
+
+	10.10.10.3 | success | rc=0 >>
+	Hallo
+
+ansible master -m shell -a "echo $TERM"
+
+	10.10.10.3 | success | rc=0 >>
+	xterm-256color
+
+ ansible master -m copy -a "src=inventory.txt dest=/home/vagrant"
+
+	10.10.10.3 | success >> {
+	    "changed": true,
+	    "checksum": "94957b748c4b58ca4134adfb5bbd30de206f6806",
+	    "dest": "/home/vagrant/inventory.txt",
+	    "gid": 1000,
+	    "group": "vagrant",
+	    "md5sum": "540f18f09f10bcbc3b036856555d0fc2",
+	    "mode": "0664",
+	    "owner": "vagrant",
+	    "size": 96,
+	    "src": "/home/vagrant/.ansible/tmp/ansible-tmp-1439407339.67-238905645107410/source",
+	    "state": "file",
+	    "uid": 1000
+	}
+
+ansible master -m shell -a "ls"
+
+	10.10.10.3 | success | rc=0 >>
+	inventory.txt
+	shared
+
+ansible master -sudo -m apt -a "pkg=slurm-llnl state=latest"
+
+
+
+cm-cluster inventory [FILE]
+cm-cluster up
+cm-cluster status
+cm-cluster ping
+cm-cluster deploy
+cm-cluster shell COMMAND [HOST]
+cm-cluster sbatch FILE          
+
+cm-cluster sbatch test.sh
+
+cm-cluster shell ls
+
+cm-cluster shell "cat slurm.out" worker001

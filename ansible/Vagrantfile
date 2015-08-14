@@ -3,20 +3,18 @@ require 'yaml'
 
 ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
 
-
 #Provisioning inline script
 $script = <<SCRIPT
 echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys
 echo #{ssh_pub_key} >> /root/.ssh/authorized_keys
 SCRIPT
 
-def parse_specification(path)
+def parse_hostlist(path)
   contents = File.read(path)
   YAML.load(contents)
 end
 
 def write_inventory(spec, path)
-
   File.open(path, 'w') do |fd|
     spec.each do |group,nodes|
       fd << "[#{group}]" << "\n"
@@ -32,7 +30,7 @@ def write_inventory(spec, path)
 
 end
 
-spec = parse_specification("spec.yaml")
+spec = parse_hostlist("spec.yaml")
 puts spec
 
 write_inventory(spec, "inventory.txt")
@@ -82,11 +80,12 @@ Vagrant.configure("2") do |config|
   config.vm.provision :shell, :inline => $script
 
   # RUNNING THE ANSIBLE PLAYBOOK
-  config.vm.provision "ansible" do |ansible|
-     ansible.inventory_path = "inventory.txt"
-     ansible.playbook = "playbook.yml"
-     ansible.host_key_checking = false
-  end
+  # config.vm.provision "ansible" do |ansible|
+  #  puts ansible
+  #  ansible.inventory_path = "inventory.txt"
+  #  ansible.playbook = "playbook.yml"
+  #  ansible.host_key_checking = false
+  # end
 
 
 end

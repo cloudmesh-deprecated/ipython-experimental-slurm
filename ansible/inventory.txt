@@ -2,6 +2,6 @@
 master ansible_ssh_host=10.10.10.3 ansible_ssh_user=vagrant
 
 [worker]
-worker-01 ansible_ssh_host=10.10.10.4 ansible_ssh_user=vagrant
-worker-02 ansible_ssh_host=10.10.10.5 ansible_ssh_user=vagrant
+worker001 ansible_ssh_host=10.10.10.4 ansible_ssh_user=vagrant
+worker002 ansible_ssh_host=10.10.10.5 ansible_ssh_user=vagrant
 
