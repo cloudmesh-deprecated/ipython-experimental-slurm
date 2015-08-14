@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
 """Usage: cm-cluster inventory [FILE]
-          cm-cluster up
           cm-cluster status
           cm-cluster ping
-          cm-cluster deploy
+          cm-cluster create [up] [deploy]
           cm-cluster shell COMMAND [HOST]
           cm-cluster sbatch FILE
           cm-cluster destroy                    
@@ -36,18 +35,39 @@ Description:
             hostname: "worker002"
             ipaddress: "10.10.10.5"
 
-    Next you need to create the inventory files with the command::
+    Now you want to start some virtual machines with 
 
-       cm-cluster inventory
+        cm-cluster create
 
-    This will create the files inventory.txt and inventory.rb
+    To check the status we can use
 
-    Now you want to start some virtual machines on which we deploy the cluster with 
+          cm-cluster status
+          cm-cluster ping
 
-        cm-cluster up
+    To execute a command on all hosts we can say (lets use hostname)
 
-    Now we switch to ansible to manage the cluster 
+        cm-cluster shell hostanme
 
+    To submit a job test.sh that is specified in the current working dir we can say
+
+        cm-cluster sbatch test.sh
+
+    We have not made it more conveinent to tech the result, so you can use
+
+        cm-cluster shell ls
+
+    to locate the slurm.out file (specified in test.sh) and than do
+
+        cm-cluster sell "cat slurm.out" WORKER, where WORKER is the hostname that contains
+
+    the out file. We will provide in future more elaborate examples.
+
+    To destroy the cluster you can say
+
+       cm-cluster destroy
+
+    Note that will delete all virtual machines and files you may have produced in them.
+    
     
 """
 from docopt import docopt
@@ -109,38 +129,51 @@ def generate_ansible_inventory(inventory):
         content = content + "\n"
     return content
 
+
+def create_inventory(filename):
+
+    if filename is None:
+        filename = "inventory.yml"
+            
+    stream = open(filename, "r")
+    inventory = yaml.load(stream)
+
+    ansible_inventory = generate_ansible_inventory(inventory)
+
+    with open("inventory.txt", "w") as text_file:
+        text_file.write(ansible_inventory)
+            
+    vagrant_inventory = generate_vagrant_inventory(inventory)
+
+    with open("inventory.rb", "w") as text_file:
+        text_file.write(vagrant_inventory)
+
+    etc_inventory = generate_etc_inventory(inventory)            
+    with open("hosts", "w") as text_file:
+        text_file.write(etc_inventory)
+
+        
 if __name__ == '__main__':
     arguments = docopt(__doc__)
     # print(arguments)
 
-    if arguments['inventory']:
+    if arguments['create']:
 
-        filename = arguments['FILE']
+        if not arguments['up'] and not arguments['inventory'] and not arguments['deploy']:
+            arguments['up'] = arguments['inventory'] = arguments['deploy'] = True
 
-        if filename is None:
-            filename = "inventory.yml"
+        if arguments['inventory']:
+               filename = arguments['FILE']
+               create_inventory(filename)
+
+        if arguments['up']:
+
+            os.system("vagrant up")
+
+        if arguments['deploy']:
+
+            os.system("ansible-playbook playbook.yml")
             
-        stream = open(filename, "r")
-        inventory = yaml.load(stream)
-
-        ansible_inventory = generate_ansible_inventory(inventory)
-
-        with open("inventory.txt", "w") as text_file:
-            text_file.write(ansible_inventory)
-            
-        vagrant_inventory = generate_vagrant_inventory(inventory)
-
-        with open("inventory.rb", "w") as text_file:
-            text_file.write(vagrant_inventory)
-
-        etc_inventory = generate_etc_inventory(inventory)            
-        with open("hosts", "w") as text_file:
-            text_file.write(etc_inventory)
-            
-    elif arguments['up']:
-
-        os.system("vagrant up")
-
     elif arguments['status']:
 
         os.system("vagrant status")
@@ -153,9 +186,6 @@ if __name__ == '__main__':
 
         os.system("ansible -m ping all")
 
-    elif arguments['deploy']:
-
-        os.system("ansible-playbook playbook.yml")
 
     elif arguments['shell']:
 
